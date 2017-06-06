@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="Estilos/chosen.css">
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="estilos.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script></head>
+<body>
+    <form name="pensum" method="post" >
+    <table id="tabla">
+        <thead id="cabecera">
+            <th>Trimestre 1</th>
+            <th id="nuevoPeriodo" onclick="crearPeriodo();"><button id="trimestre" type="button" >+</button></th>
+        </thead>  
+        <tbody id="tablaCuerpo">
+            <tr>
+                <td id="td0" class="nuevaMateria">
+                    <button type ="button" onclick="crearFormulario(this.parentNode);">+</button>
+                </td>
+            </tr>
+            <tr>
+                <td id="td1">
+                    <button type ="button" onclick="agregarFila();">Agregar Fila</button>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+        <div id="content" >
+        </div>
+        
+    </form>
+<script type="text/javascript" src="Scripts/main.js"></script>
+</body>
+</html>

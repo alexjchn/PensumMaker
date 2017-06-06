@@ -1,0 +1,46 @@
+
+
+table {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+td {
+    border: 1px solid black;
+    height: 35px;
+    width: 100px;
+    text-align: center;
+    padding: 5px;
+}
+th {
+    border: 1px solid black;
+    padding: 10px
+
+}
+
+.inputtext {
+    width: 80px;
+}
+p {
+    margin: 5px 0px 5px 0px;
+}
+.span1 {
+    color: navy;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.span2 {
+    color: crimson;
+    cursor: pointer;
+}
+.span1:hover {
+    color:blue;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.span2:hover {
+    color:red;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+}
