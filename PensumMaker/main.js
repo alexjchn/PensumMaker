@@ -7,6 +7,8 @@ FECHA: 06-06-2017
 CONTRIBUIDORES: Alfred Castillo, Victor Noguera.
 */
 
+boton1.addEventListener("click",crearFormulario);
+boton2.addEventListener("click",agregarFila);
 
 
 var arrayMaterias = []; //Array que almacenara cada nueva materia
@@ -122,7 +124,7 @@ var row = tabla.insertRow(rowCount-1);
         var cell1 = row.insertCell(i);
         contTd++;
         cell1.id = "td"+ contTd;
-        cell1.innerHTML= '<button type ="button" onclick="crearFormulario(this.parentNode);">+</button>';
+        cell1.innerHTML= '<button type ="button" onclick="crearFormulario(event);">+</button>';
 
         }
         
@@ -147,7 +149,7 @@ var  nuevoTh = document.createElement("th");
             var  nuevoTd = document.createElement("td");
             contTd++;
             nuevoTd.id= "td"+ contTd;
-                        nuevoTd.innerHTML = '<button type ="button" onclick="crearFormulario(this.parentNode);">+</button>';
+                        nuevoTd.innerHTML = '<button type ="button" onclick="crearFormulario(event);">+</button>';
                         arrayTr[i].appendChild(nuevoTd);
             }
         }
@@ -229,11 +231,12 @@ function crear(lista,nombre,td){
 }
 
 function cancelar(td){ // Regresa el TableDatacell al estado original.
-    td.innerHTML="<button type ='button' onclick='crearFormulario(this.parentNode);'>+</button>";
+    td.innerHTML="<button type ='button' onclick='crearFormulario(event);'>+</button>";
 }
 
-function crearFormulario(td){ //Formulario para crear nueva materia.
+function crearFormulario(event){ //Formulario para crear nueva materia.
     //Creamos elementos y asignamos valores a sus propiedades.
+    var td = event.target.parentNode;
     td.innerHTML = ""; //limpiamos el contenido del datacell
     var form = document.createElement("form");
     var contenedor = document.createElement('div');
