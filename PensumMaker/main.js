@@ -7,10 +7,18 @@ FECHA: 06-06-2017
 CONTRIBUIDORES: Alfred Castillo, Victor Noguera.
 */
 
+
+
 boton1.addEventListener("click", crearFormulario); //Eliminar esta linea despues de haber creado el Pensum.
 boton2.addEventListener("click", agregarFila);
+boton3.addEventListener("click",guardarPensum);
+boton4.addEventListener("click",() => {localStorage.clear()});
+boton5.addEventListener("click", () => { content.style.display == "none" ? content.style.display = "block" : content.style.display = "none"  })
 
-
+function guardarPensum () {
+    localStorage.setItem ("materias", content.textContent);
+    localStorage.setItem ("tabla", tabla.innerHTML);
+}
 var arrayMaterias = []; //Array que almacenara cada nueva materia
 
 //Funcion constructora del objeto materia
@@ -95,11 +103,7 @@ materia.prototype = { // En este prototipo incluyo los metodos que son comunes p
         }
     }
 }
-//A- Aqui abajo Puedes pegar el texto generado anteriormente por el PensumMaker y asi guardar el pemsun creado.
 
-
-FixPrelacion ();// Actualiza las prelaciones al momento de cargarse la pagina.
-//A - FIN
 //Variables para controlar la tabla.
 
 var arrayTh = document.getElementsByTagName("th");
@@ -338,4 +342,9 @@ function FixPrelacion() { //Funcion que lo unico que hace es ejecutar el metodo 
     for (var i = 0; i < arrayMaterias.length; i++) {
         arrayMaterias[i].prelacion();
     }
+}
+if (localStorage.getItem("materias")) {
+    tabla.innerHTML = localStorage.getItem("tabla");
+    document.write("<script type = 'text/javascript'>"+ localStorage.getItem("materias") +"</script>");
+    FixPrelacion()
 }
