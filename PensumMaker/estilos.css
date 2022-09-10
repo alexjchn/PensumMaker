@@ -1,27 +1,13 @@
 
-
-table {
-    border-collapse: collapse;
-    margin: 0 auto;
-}
-td {
-    border: 1px solid black;
-    height: 35px;
-    width: 100px;
-    text-align: center;
-    padding: 5px;
-}
-th {
-    border: 1px solid black;
-    padding: 10px
-
-}
-
 .inputtext {
     width: 80px;
 }
 p {
     margin: 5px 0px 5px 0px;
+}
+th, td {
+	text-align: center;
+	vertical-align: middle !important; 
 }
 .span1 {
     color: navy;
@@ -43,4 +29,21 @@ p {
     text-decoration: underline;
     margin-right: 10px;
     cursor: pointer;
+}
+.requisito {
+	background-color: #fb635c;
+}
+.prelacion {
+	background-color: #9de1fb;
+}
+.aprobada {
+	background-color: #fff579;
+}
+.normal {
+	background-color: white;
+}
+.contenedorx {
+    display: flex   ;
+    flex-direction: column;
+    justify-content: space-between;
 }
