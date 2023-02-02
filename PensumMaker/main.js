@@ -49,7 +49,7 @@ materia.prototype.desbloquear = function () {
 					alert(`Te falta aprobar: ${porAprobar}`)
 				}
 		}
-	} else { //Este else se aplica cuando deseleccionamos el CheckBox y permite restaurar las propiedades de la materia y si es el caso tamien restaura todas las que la tengan como requisito.
+	} else { //Este else se aplica cuando deseleccionamos el CheckBox y permite restaurar las propiedades de la materia y si es el caso tambien restaura todas las que la tengan como requisito.
 		materia.aprobada = 0;
 		materia.td.className = "normal";
 		if (materia.prelaciones[0]) {
@@ -84,92 +84,44 @@ materia.prototype.addReq = function (req) {
 		},this)
 	}	
 }
-function init() {
-	let contenedor = $("#contenedor")[0]
-	let tabla_template = `
-		<div class="table-responsive">
-			<table  class="table table-sm table-striped" id="tabla">
-				<caption>Pensum Maker v3</caption>
-				<thead class="thead-dark">
-					<th id="periodo">${PERIODO} 1</th>
-					<th>
-						<button type="button" class="btn btn-light" id="aggPeriodo" onclick="agregarPeriodo.bind(TABLA)()">+</button>
-					</th>
-				</thead>
-				<tbody>
-					<tr>
-						<td id=td1>
-							<button type="button" class="btn btn-dark" onclick="crearFormulario.bind(TABLA)(event)">+</button>
-						</td>
-					</tr>
-					<tr>
-						<td id=td2>
-							<button type="button" class="btn btn-dark" id="aggFila" onclick="agregarFila.bind(TABLA)()">Agregar Fila</button>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>`
-	contenedor.innerHTML = tabla_template
-	TABLA = $("#tabla")[0]
-    if (localStorage.getItem("materias")) {
-		contenedor.innerHTML = localStorage.getItem("tabla")
-		document.write("<script id='asd1' type = 'text/javascript'>"+ localStorage.getItem("materias") +"</script>")
-		content.textContent = localStorage.getItem("materias")
-	} 
-	boton3.addEventListener("click",guardarPensum.bind());
-	boton4.addEventListener("click",() => {localStorage.clear()});
-	boton5.addEventListener("click", () => { content.style.display == "none" ? content.style.display = "block" : content.style.display = "none"  })
-	boton6.addEventListener("click", crearArchivoJs);
-}
 
 //Funciones relacionadas a la tabla.
 
 function agregarFila() {
-	const tabla = this
-	const rowCount = tabla.rows.length;
+	TABLA = $("#tabla")[0]
+	const rowCount = TABLA.rows.length;
     if (rowCount <= MAX_MATERIAS +1) {
-
-		let row = tabla.insertRow(rowCount - 1);
-        for (let i = 0; i < tabla.rows[0].childElementCount - 1; i++) {
+		let row = TABLA.insertRow(rowCount - 1);
+        for (let i = 0; i < TABLA.rows[0].childElementCount - 1; i++) {
             const nuevoTd = row.insertCell(i);
-			let contTd = tabla.getElementsByTagName("td").length
-            nuevoTd.id = "td" + contTd
-			addBoton(nuevoTd,"+",crearFormulario,tabla)
+			nuevoTd.id = "td" + TABLA.getElementsByTagName("td").length;
+			nuevoTd.innerHTML= `<button type="button" class="btn btn-dark" onclick="crearFormulario(event);">+</button>`
         }
     } else {
         alert(`No puedes agregar mas de ${MAX_MATERIAS} materias para un solo periodo.`);
     }
 }
 function agregarPeriodo() { // Crea Nueva Columna
-	let tabla = this
-	let tableHead = tabla.rows[0]
+	TABLA = $("#tabla")[0]
+	let tableHead = TABLA.rows[0]
     if (tableHead.childElementCount <= MAX_PERIODO) {
         const nuevoTh = document.createElement("th")
 		nuevoTh.className ="periodo"
-		nuevoTh.innerHTML = `${PERIODO} ${tabla.rows[0].childElementCount}`;
+		nuevoTh.innerHTML = `${PERIODO} ${TABLA.rows[0].childElementCount}`;
         tableHead.insertBefore(nuevoTh, tableHead.lastElementChild);
        
-        for (let i = 1; i <tabla.rows.length ; i++) {
-            if (i != (tabla.rows.length - 1)) {
-				const nuevoTd = tabla.rows[i].insertCell()
-                nuevoTd.id = "td" + tabla.getElementsByTagName("td").length;
-                addBoton(nuevoTd,"+",crearFormulario,tabla)
+        for (let i = 1; i <TABLA.rows.length ; i++) {
+            if (i != (TABLA.rows.length - 1)) {
+				const nuevoTd = TABLA.rows[i].insertCell()
+                nuevoTd.id = "td" + TABLA.getElementsByTagName("td").length;
+				nuevoTd.innerHTML= `<button type="button" class="btn btn-dark" onclick="crearFormulario(event);">+</button>`
             } 
         }
     } else {
         alert(`No puedes agregar mas de ${MAX_PERIODO} periodos.`)
     }
 }
-function addBoton (padre,contenido,funcion,tabla) {
-	const boton = document.createElement("button")
-	boton.type = "button"
-	boton.className = "btn btn-dark"
-	boton.textContent = contenido
-	boton.onclick = funcion.bind(tabla)
-	padre.appendChild(boton)
-	return boton
-}
+
 //Funciones para crear Nuevo Objeto materia dinamicamente.
 
 function seleccionados(lista) {	//Funcin que recibe las materias y verifica cuales estan seleccionadas y devuelve los requisitos de la Nueva materia
@@ -318,9 +270,49 @@ function guardarPensum () {
 	} else {
 		localStorage.setItem ("materias", content.textContent)
 	}
-    localStorage.setItem ("tabla", this.innerHTML)
+    localStorage.setItem ("tabla", contenedor.innerHTML)
     localStorage.setItem("materiaobjetos",materia.objetos)
     console.log('guardado')
 }
+
+function init() {
+	let contenedor = $("#contenedor")[0]
+	let tabla_template = `
+		<div class="table-responsive" id="FullTabla">
+			<table  class="table table-sm table-striped" id="tabla">
+				<caption>Pensum Maker v3</caption>
+				<thead class="thead-dark">
+					<th id="periodo">${PERIODO} 1</th>
+					<th>
+						<button type="button" class="btn btn-light" id="aggPeriodo" onclick="agregarPeriodo()">+</button>
+					</th>
+				</thead>
+				<tbody>
+					<tr>
+						<td id=td1>
+							<button type="button" class="btn btn-dark" onclick="crearFormulario(event)">+</button>
+						</td>
+					</tr>
+					<tr>
+						<td id=td2>
+							<button type="button" class="btn btn-dark" id="aggFila" onclick="agregarFila()">Agregar Fila</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>`
+	contenedor.innerHTML = tabla_template
+	TABLA = $("#tabla")[0]
+    if (localStorage.getItem("materias")) {
+		contenedor.innerHTML = localStorage.getItem("tabla")
+		document.write("<script id='asd1' type = 'text/javascript'>"+ localStorage.getItem("materias") +"</script>")
+		content.textContent = localStorage.getItem("materias")
+	} 
+	boton3.addEventListener("click",guardarPensum.bind());
+	boton4.addEventListener("click",() => {localStorage.clear()});
+	boton5.addEventListener("click", () => { content.style.display == "none" ? content.style.display = "block" : content.style.display = "none"  })
+	boton6.addEventListener("click", crearArchivoJs);
+}
+
 
 init()
