@@ -9,310 +9,378 @@ CONTRIBUIDORES: Alfred Castillo.
 */
 const MAX_MATERIAS = 12
 const MAX_PERIODO = 10
-const PERIODO = "Trimestre"
-var TABLA = null
+const PERIODO = "Semestre"
 
-class materia {
-	constructor (nombre, td, selector) {
-		if (!materia.objetos) materia.objetos = [this]
-		else materia.objetos.push(this)
+class Materia {
+	constructor (nombre, td) {
+		if (!Materia.objetos){
+			Materia.objetos = new Set().add(this)
+			Materia.matriz= [[],[],[],[],[],[],[],[],[],[]]
+		} 
+		else{
+			Materia.objetos.add(this)
+		} 
+		
+		this.requisitos = new Set()
+		this.prelaciones = new Set()
 		this.nombre = nombre
-		this.requisitos = []
 		this.aprobada = 0
-		this.td = td || undefined
-		this.prelaciones = []
-		this.select = selector
+		this.td = td
+		this.select = null
+		this.positionX = 0
+		this.positiony = 0
 	}
-}
-
-materia.prototype.desbloquear = function () {
-	let i, cont = 0, materia = this
-	if (materia.select.checked) {
-		if (!materia.requisitos[0]) {
-			materia.aprobada = 1
-			materia.td.className = "aprobada"
-		} else {
-			var porAprobar= "";
-			materia.requisitos.forEach(function(req) {
-				let materia = this
-				if (!req.aprobada) {
-					porAprobar+= `\n ${req.nombre}` 
-					materia.select.checked = false
-				} else {
-					cont++
-						if (cont == materia.requisitos.length) {
-							materia.aprobada = 1;
-							materia.td.className = "aprobada";
-						}
-				}},this)
+	desbloquear  () {
+		console.log("Desbloqueando")
+		if (this.select.checked) {
+		
+			if (this.requisitos.size == 0) {
+				this.aprobada = 1
+				this.td.className = "aprobada"
+			} else {
+				let porAprobar= "";
+				this.requisitos.forEach((req) => {
+					let materia = this
+					if (!req.aprobada) {
+						porAprobar+= `\n ${req.nombre}` 
+						materia.select.checked = false
+					} 
+				},this)
 				if(porAprobar != "") {
 					alert(`Te falta aprobar: ${porAprobar}`)
+				} else {
+					this.aprobada = 1;
+					this.td.className = "aprobada";
 				}
-		}
-	} else { //Este else se aplica cuando deseleccionamos el CheckBox y permite restaurar las propiedades de la materia y si es el caso tambien restaura todas las que la tengan como requisito.
-		materia.aprobada = 0;
-		materia.td.className = "normal";
-		if (materia.prelaciones[0]) {
-			materia.prelaciones.forEach(function (pre) {
-				pre.td.className = "normal";
-				pre.aprobada = 0;
-				pre.select.checked = false;
-			},materia)
-		}
-	}
-}
-materia.prototype.addReq = function (req) {
-	if (req.length == 1) {
-		if (this.requisitos.indexOf(req[0]) == -1) {
-			this.requisitos.push(req[0])
-			if (req[0].prelaciones.indexOf(this)) {
-				req[0].prelaciones.push(this)
 			}
-			if(req[0].requisitos.length == 1) {
-				this.addReq([req[0].requisitos[0]])
-			} else if (req[0].requisitos.length > 1) {
-				req[0].requisitos.forEach(function (e){
-					this.addReq([e])
+		} else { //Este else se aplica cuando deseleccionamos el CheckBox y permite restaurar las propiedades de la materia y si es el caso tambien restaura todas las que la tengan como requisito.
+			this.aprobada = 0;
+			this.td.className = "normal";
+			if (this.prelaciones.size > 0) {
+				this.prelaciones.forEach( (pre) => {
+					pre.td.className = "normal";
+					pre.aprobada = 0;
+					pre.select.checked = false;
 				},this)
 			}
 		}
-	} else {
-		req.forEach(function(req) {
-			if (this.requisitos.indexOf(req) == -1) {
-			this.addReq([req])
+	}
+	addReq(materiasRequisito){
+		materiasRequisito.forEach((materiaRequisito)=>{
+			this.requisitos.add(materiaRequisito)
+			let ownRequisitos = this.requisitos
+			let otherRequisitos = materiaRequisito.requisitos
+			this.requisitos = new Set([...ownRequisitos, ...otherRequisitos ]);
+			this.requisitos.forEach((requisito)=>{
+				requisito.prelaciones.add(this);
+			})
+		})
+	}
+	colorear() { 
+		// Funcion que permite colorear cada materia que sea requisito o prelacion
+		this.requisitos.forEach((req)=> req.td.className = "requisito")
+		this.prelaciones.forEach((pre)=>pre.td.className= "prelacion")
+	}
+	descolorear() { // Funcion que permite descolorear cada materia que sea requisito o prelacion.
+		this.requisitos.forEach((req)=> {
+			if (req.aprobada == true)  req.td.className = "aprobada"
+			else  req.td.className = ""
+		})
+		this.prelaciones.forEach((pre)=>{
+			if (pre.aprobada == true) pre.td.className = "aprobada"
+			else pre.td.className = ""
+		})
+	}
+	excluir(){
+		this.descolorear()
+		this.td.innerHTML = ""
+		Materia.matriz[this.td.posX][this.td.posY] = null;
+		this.requisitos.forEach((materiaRequisito)=>{
+			materiaRequisito.prelaciones.delete(this)
+		})
+		this.prelaciones.forEach((materiaPrelacion)=>{
+			materiaPrelacion.requisitos.delete(this)
+		})
+		this.td.appendChild(crearBotonParaCrearMateria())
+		Materia.objetos.delete(this)
+	}
+	editar(){
+		this.descolorear()
+		this.td.innerHTML = ""
+
+		let lista = crearListaYFormulario(this.td, this.nombre)
+		document.getElementById("materia_name").value = this.nombre
+
+		let options = $("#selecion").find("option")
+		this.requisitos.forEach((materiaRequisito)=>{
+			options
+			.filter(function( index ) {
+				let option = $( this )[0]
+				return option.materia.nombre == materiaRequisito.nombre;
+				})
+			.prop("selected", true)
+			.end()
+		})
+		$('#selecion').trigger("chosen:updated");
+
+		let {botonCancelar, botonConfirmar} = crearBotonesFormulario(this.td)
+		$(botonConfirmar).on("click",() => this.actualizar(lista))
+		$(botonCancelar).on("click",() => this.mostrar())
+	}
+	actualizar(listaNovosRequisitos){
+		const novosRequisitos = new Set()
+		Array.from(listaNovosRequisitos.selectedOptions).forEach(option=>novosRequisitos.add(option.materia));
+		this.requisitos.forEach((materiaRequisito)=>{
+			materiaRequisito.prelaciones.delete(this)
+		})
+		this.requisitos = new Set()
+		this.addReq(novosRequisitos)
+		/*const diff = Array.from(novosRequisitos).filter(x => !Array.from(this.requisitos).includes(x));
+		if(diff.length > 0){
+			this.addReq(diff)
+		}
+		else{
+
+		}*/
+		this.mostrar()
+	}
+	mostrar(){
+		
+		let pEdit = document.createElement("span")
+		pEdit.className = "optEdit"
+		pEdit.innerHTML = '<i class="fa-regular fa-pen-to-square"></i>'
+
+		let pEliminar = document.createElement("span")
+		pEliminar.className = "optEliminar"
+		pEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>'
+
+		let pNombre = document.createElement('p')
+		pNombre.textContent = this.nombre
+		
+		let input = document.createElement("input")
+		input.type = "checkbox"
+		
+		let divOpciones = document.createElement("div")
+		divOpciones.className = "materiaOptions"
+		divOpciones.appendChild(pEdit)
+		divOpciones.appendChild(pEliminar)
+
+		let divMateria = document.createElement('div');
+		divMateria.className = "contenedorx"
+		divMateria.appendChild(divOpciones)
+		divMateria.appendChild(pNombre)
+		divMateria.appendChild(input)
+		divMateria.addEventListener("mouseenter",()=>{ this.colorear()})
+		divMateria.addEventListener("mouseleave", ()=>{ this.descolorear()})
+	
+		this.td.innerHTML = ""
+		this.td.appendChild(divMateria)
+		this.select = input
+		pEdit.addEventListener("click", ()=> this.editar())
+		pEliminar.addEventListener("click",() => this.excluir())
+		input.addEventListener("click",()=>{ this.desbloquear()})
+		
+	}
+}
+class Table{
+	constructor(table){
+		Table.instance = this
+		this.TableElement = table
+		this.TableHead = table.rows[0]
+		
+	}
+
+	get rows(){
+		return this.TableElement.rows.length;
+	}
+
+	get columns(){
+		return this.TableHead.childElementCount - 1
+	}
+	agregarFila() {
+		if (this.rows <= MAX_MATERIAS) {
+			let newRow = this.TableElement.insertRow(this.rows - 1);
+			for (let x = 0; x < this.columns ; x++) {
+				const nuevoTd = newRow.insertCell(x);
+				nuevoTd.posX = `${x}`
+				nuevoTd.posY = `${this.rows-3}`
+				let botonCrearMateria = crearBotonParaCrearMateria()
+				nuevoTd.appendChild(botonCrearMateria)
+			}	
+		} else {
+			alert(`No puedes agregar mas de ${MAX_MATERIAS} materias para un solo periodo.`);
+		}
+	}
+	agregarColumna() { // Crea Nueva Columna
+		if (this.TableHead.childElementCount <= MAX_PERIODO) {
+			const nuevoTh = document.createElement("th")
+			nuevoTh.className ="periodo"
+			nuevoTh.innerHTML = `${PERIODO} ${this.TableHead.childElementCount}`;
+			this.TableHead.insertBefore(nuevoTh, this.TableHead.lastElementChild);
+			//Pulando a primeira fila th i = 1
+			for (let y = 1; y <this.rows ; y++) {
+				if (y != (this.rows - 1)) {
+					const nuevoTd = this.TableElement.rows[y].insertCell()
+					nuevoTd.posX = `${this.columns-1}`
+					nuevoTd.posY = `${y-1}`
+					let botonCrearMateria = crearBotonParaCrearMateria()
+					nuevoTd.appendChild(botonCrearMateria)
+				} 
 			}
-		},this)
-	}	
+		} else {
+			alert(`No puedes agregar mas de ${MAX_PERIODO} periodos.`)
+		}
+	}
+}
+function crearBotonParaCrearMateria(){
+	let button = document.createElement("button")
+	button.type = "button"
+	button.className = "btn btn-dark"
+	button.addEventListener("click",crearFormulario)
+	button.textContent = "+"
+	return button
 }
 
-//Funciones relacionadas a la tabla.
 
-function agregarFila() {
-	TABLA = $("#tabla")[0]
-	const rowCount = TABLA.rows.length;
-    if (rowCount <= MAX_MATERIAS +1) {
-		let row = TABLA.insertRow(rowCount - 1);
-        for (let i = 0; i < TABLA.rows[0].childElementCount - 1; i++) {
-            const nuevoTd = row.insertCell(i);
-			nuevoTd.id = "td" + TABLA.getElementsByTagName("td").length;
-			nuevoTd.innerHTML= `<button type="button" class="btn btn-dark" onclick="crearFormulario(event);">+</button>`
-        }
-    } else {
-        alert(`No puedes agregar mas de ${MAX_MATERIAS} materias para un solo periodo.`);
-    }
-}
-function agregarPeriodo() { // Crea Nueva Columna
-	TABLA = $("#tabla")[0]
-	let tableHead = TABLA.rows[0]
-    if (tableHead.childElementCount <= MAX_PERIODO) {
-        const nuevoTh = document.createElement("th")
-		nuevoTh.className ="periodo"
-		nuevoTh.innerHTML = `${PERIODO} ${TABLA.rows[0].childElementCount}`;
-        tableHead.insertBefore(nuevoTh, tableHead.lastElementChild);
-       
-        for (let i = 1; i <TABLA.rows.length ; i++) {
-            if (i != (TABLA.rows.length - 1)) {
-				const nuevoTd = TABLA.rows[i].insertCell()
-                nuevoTd.id = "td" + TABLA.getElementsByTagName("td").length;
-				nuevoTd.innerHTML= `<button type="button" class="btn btn-dark" onclick="crearFormulario(event);">+</button>`
-            } 
-        }
-    } else {
-        alert(`No puedes agregar mas de ${MAX_PERIODO} periodos.`)
-    }
-}
 
-//Funciones para crear Nuevo Objeto materia dinamicamente.
-
-function seleccionados(lista) {	//Funcin que recibe las materias y verifica cuales estan seleccionadas y devuelve los requisitos de la Nueva materia
-	const opciones = lista.selectedOptions
-	let seleccionados = []
-	Array.from(opciones).forEach(e=>seleccionados.push(e.valor))
-	return seleccionados
-}
-
-function crear(lista, nombre, td) {
-    const requisitos = seleccionados(lista); // manda la lista de materias para que verifique cuales fueron seleccionadas.
+function crearMateria(lista, td) {
+	const nombre =  document.getElementById("materia_name").value
+    const requisitos = new Set()
+	Array.from(lista.selectedOptions).forEach(option=>requisitos.add(option.materia)); // manda la lista de materias para que verifique cuales fueron seleccionadas.
     if (!nombre) {
       alert("No has Ingresado el nombre de la nueva materia.");
+	  return;
     } 
-    else if (!requisitos[0]) {
-		if (confirm("¿Estas seguro de crear la materia sin requisitos?")) {	
-			let input = devolverMateria(td, nombre, requisitos)
-			let nombreFormateado = nombre.toLowerCase().replace(/ /g, '');
-			const p = document.createElement("p");
-            p.innerHTML = `let ${nombreFormateado} = new materia ('${nombre}',$('#${td.id}')[0],$('#${input.id}')[0]);<br>`;
-			document.getElementById("content").appendChild(p);
-        }
-	} else {
-		let input = devolverMateria(td, nombre, requisitos)
-        let nombresMaterias = []; // Esta parte es la que genera texto que hasta ahora es la que me permite guardar los pensums offline.
-        requisitos.forEach( (e) => nombresMaterias.push(e.nombre))
-        const nombresMateriaFor = nombresMaterias.toString().toLowerCase().replace(/ /g, '');
-        const nombreFormateado = nombre.toLowerCase().replace(/ /g, '');
-        const p = document.createElement("p");
-		p.innerHTML = `let ${nombreFormateado} = new materia ('${nombre}',$('#${td.id}')[0],$('#${input.id}')[0]);<br>${nombreFormateado}.addReq([${nombresMateriaFor}]);<br>`;
-        document.getElementById("content").appendChild(p);
-    }
+    else{
+		if (requisitos.size == 0  ) {
+			if (confirm("¿Estas seguro de crear la materia sin requisitos?") == false) {	
+				return
+			}
+		}
+
+		let materia = new Materia(nombre, td) //Creamos y Agregamos la Nueva Materia al array.
+		Materia.matriz[td.posX][td.posY] = materia
+		materia.addReq(requisitos)
+		materia.mostrar()	
+	} 
+
 }
 
-function crearFormulario(event) { //Formulario para crear nueva materia.
+
+function crearFormulario() { //Formulario para crear nueva materia.
     //Creamos elementos y asignamos valores a sus propiedades.
-    var td = event.target.parentNode;
-	const template =  `
-	<form>
-		<div class="form-group">
-			<label for="in">Nombre</label>
-			<input type="text" class="form-control" id="in" placeholder="Nombre de la Materia">
-		</div>
-			<label for="lis">Materias Requeridas</label>
-	</form>
-	`
-	td.innerHTML = template
-    var lista = document.createElement("select")
-	lista.id= "lis"
-	lista.className = "chosen-select"
-	lista.multiple = true
-    //Agrupamos en orden los elementos del Formulario
-	td.appendChild(lista)
-    //Con creamos la lista de materias.
-	if (materia.objetos){
-		materia.objetos.forEach((e)=>{
-		const opcion = document.createElement('option')
-		opcion.valor = e
-		opcion.textContent = e.nombre
-		lista.appendChild(opcion)
-	})
-	}
+	
+	td = event.target.parentNode;
+	td.innerHTML = ""
+	let lista = crearListaYFormulario(td)
+	
 	$(".chosen-select").chosen({width: "100%"})
-    // Estos Son los Botones para Aceptar la creacion de una nueva materia o Cancelarla.
+
+    let {botonCancelar, botonConfirmar} = crearBotonesFormulario(td)
+	
+	botonConfirmar.addEventListener("click",() => crearMateria(lista, td))
+	botonCancelar.addEventListener("click",() => { 
+		td.innerHTML = ""
+		td.appendChild(crearBotonParaCrearMateria());
+	} )
+}
+
+function crearListaYFormulario(td, nombreMateria=""){
+	
+	let labelForMateria = document.createElement("label")
+	labelForMateria.setAttribute("for", "materia_name")
+	labelForMateria.textContent = "Nombre"
+	
+	let inputNombre = document.createElement("input")
+	inputNombre.type = "text"
+	inputNombre.className = "form-control"
+	inputNombre.id = "materia_name"
+	inputNombre.placeholder = "Nombre de la materia"
+
+	let divFormGroup = document.createElement("div")
+	divFormGroup.className = "form-group"
+	divFormGroup.appendChild(labelForMateria)
+	divFormGroup.appendChild(inputNombre)
+
+	let labelForLista = document.createElement("label")
+	labelForLista.setAttribute("for", "lis")
+	labelForLista.textContent = "Materias Requeridas"
+	
+	let lista = document.createElement("select")
+	lista.className = "chosen-select"
+	lista.id = "selecion"
+	lista.multiple = true
+   
+	let form = document.createElement("form")
+	form.appendChild(divFormGroup)
+	form.appendChild(labelForLista)
+	form.appendChild(lista)
+    //Con creamos la lista de materias.
+	
+	if (Materia.objetos){
+		Materia.objetos.forEach((materia)=>{
+			if(nombreMateria != ""){
+				if (materia.nombre == nombreMateria){
+					return
+				}
+			}
+			const opcion = document.createElement('option')
+			opcion.materia = materia
+			opcion.textContent = materia.nombre
+			lista.appendChild(opcion)
+		})
+	}
+	
+	td.appendChild(form)
+	td.formularioMateria = form
+
+	$(".chosen-select").chosen({width: "100%"})
+	return lista
+}
+function crearBotonesFormulario(td){
+	let buttonConfirm = document.createElement("button")
+    buttonConfirm.className="btn btn-success"
+	buttonConfirm.textContent="Ok"
+   
+	let buttonCancel = document.createElement("button")
+    buttonCancel.className="btn btn-danger"
+	buttonCancel.textContent="Cancelar"
+
     let botones = document.createElement("div")
 	botones.className ="pt-1 d-flex justify-content-around"
-	let span1 = document.createElement("button")
-    span1.className="btn btn-success"
-	span1.textContent="Ok"
-    let span2 = document.createElement("button")
-    span2.className="btn btn-danger"
-	span2.textContent="Cancelar"
-    botones.appendChild(span1)
-    botones.appendChild(span2)
+	botones.appendChild(buttonConfirm)
+    botones.appendChild(buttonCancel)
+
 	td.appendChild(botones)
-	$(span1).on("click",() => crear(lista, document.getElementById("in").value, td))
- 	$(span2).on("click",() => td.innerHTML = "<button type='button' class='btn btn-dark' onclick='crearFormulario(event);'>+</button>")
+
+	return {"botonCancelar":buttonCancel, "botonConfirmar": buttonConfirm}
 }
 
-
-function devolverMateria(td, nombre, requisitos) { //Esta funcion crea la nueva td y regresa el Checkbox para guardarlo en la propiedad select de cada materia
-	let objeto = new materia(nombre, td); //Creamos y Agregamos la Nueva Materia al array.
-	objeto.addReq(requisitos)
-    let i = materia.objetos.length - 1; //Nos posicionamos sobre esta nueva materia.
-    td.innerHTML = `
-	<div class="contenedorx" onmouseover="ColorearRequisitos(materia.objetos[${i}]);" 
-	onmouseleave="descolorearRequisitos(materia.objetos[${i}]);">
-		<p>${nombre}</p>
-		<input id="s${i}" type="checkbox" onclick="materia.objetos[${i}].desbloquear();">
-	</div>
-	`
-	let input = $(`#s${i}`)[0]
-    materia.objetos[i].select = input
-	console.log("Materia Creada Satisfactoriamente"); //avisamos de su creacion.
-    return input;
+const tablaTemplate = `
+<div class="table-responsive" id="FullTabla">
+	<table  class="table table-sm table-striped table-bordered " id="tabla">
+		<caption>Pensum Maker v3</caption>
+		<thead class="thead-dark">
+			<th class="periodo">${PERIODO} 1</th>
+			<th>
+				<button type="button" class="btn btn-light" id="aggPeriodo" onclick="Table.instance.agregarColumna()">+</button>
+			</th>
+		</thead>
+		<tbody>
+			<tr>
+				<td >
+					<button type="button" class="btn btn-dark" id="aggFila" onclick="Table.instance.agregarFila()">Agregar Fila</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+`
+function CrearTabla() {
+	let contenedor = document.getElementById("contenedor")
+	contenedor.innerHTML = tablaTemplate
+	new Table(document.getElementById("tabla"))
 }
 
-// for(let i=1; i < materia.objetos.length ;i++){
-     // llenarTd(i)
-// }
-function llenarTd(i){
-		let nombre = materia.objetos[i-1].nombre
-		let template =
-		`
-			<div class="contenedorx" onmouseover="ColorearRequisitos(materia.objetos[${i-1}]);" onmouseleave="descolorearRequisitos(materia.objetos[${i-1}]);">
-				<p>${nombre}</p>
-				<input id="s${i}" type="checkbox" onclick="materia.objetos[${i-1}].desbloquear();">
-			</div>
-		`
-		let td = $(`#td${i}`)[0] 
-		td.innerHTML = template
-		let input =$(`#s${i}`)[0]
-		materia.objetos[i-1].select = input
-        console.log(materia.objetos[i-1].select)
-}
- 
-
-function ColorearRequisitos(materia) { // Funcion que permite colorear cada materia que sea requisito o prelacion
-	materia.requisitos.forEach((req)=> req.td.className = "requisito")
-	materia.prelaciones.forEach((pre)=>pre.td.className= "prelacion")
-}
-
-function descolorearRequisitos(materia) { // Funcion que permite descolorear cada materia que sea requisito o prelacion.
-		materia.requisitos.forEach((req)=> {
-			if (req.aprobada == true)  req.td.className = "aprobada"
-			else  req.td.className = "normal"
-		})
-        materia.prelaciones.forEach((pre)=>{
-			if (pre.aprobada == true) pre.td.className = "aprobada"
-			else pre.td.className = "normal"
-		})
-}
-
-//Funciones relacionadas a guardar el progreso
-
-function crearArchivoJs() {
-	const contenidoDeArchivo = content.innerText
-	boton6.firstChild.download = "materias.js";
-	boton6.firstChild.href = "data:application/octet-stream," + encodeURIComponent(contenidoDeArchivo);
-}
-
-function guardarPensum () {
-	if(!(localStorage.getItem("guardado"))) {
-		localStorage.setItem ("materias", content.textContent)
-    	localStorage.setItem ("guardado", 1)
-	} else {
-		localStorage.setItem ("materias", content.textContent)
-	}
-    localStorage.setItem ("tabla", contenedor.innerHTML)
-    localStorage.setItem("materiaobjetos",materia.objetos)
-    console.log('guardado')
-}
-
-function init() {
-	let contenedor = $("#contenedor")[0]
-	let tabla_template = `
-		<div class="table-responsive" id="FullTabla">
-			<table  class="table table-sm table-striped" id="tabla">
-				<caption>Pensum Maker v3</caption>
-				<thead class="thead-dark">
-					<th id="periodo">${PERIODO} 1</th>
-					<th>
-						<button type="button" class="btn btn-light" id="aggPeriodo" onclick="agregarPeriodo()">+</button>
-					</th>
-				</thead>
-				<tbody>
-					<tr>
-						<td id=td1>
-							<button type="button" class="btn btn-dark" onclick="crearFormulario(event)">+</button>
-						</td>
-					</tr>
-					<tr>
-						<td id=td2>
-							<button type="button" class="btn btn-dark" id="aggFila" onclick="agregarFila()">Agregar Fila</button>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>`
-	contenedor.innerHTML = tabla_template
-	TABLA = $("#tabla")[0]
-    if (localStorage.getItem("materias")) {
-		contenedor.innerHTML = localStorage.getItem("tabla")
-		document.write("<script id='asd1' type = 'text/javascript'>"+ localStorage.getItem("materias") +"</script>")
-		content.textContent = localStorage.getItem("materias")
-	} 
-	boton3.addEventListener("click",guardarPensum.bind());
-	boton4.addEventListener("click",() => {localStorage.clear()});
-	boton5.addEventListener("click", () => { content.style.display == "none" ? content.style.display = "block" : content.style.display = "none"  })
-	boton6.addEventListener("click", crearArchivoJs);
-}
-
-
-init()
+CrearTabla()
+Table.instance.agregarFila()

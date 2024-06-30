@@ -1,0 +1,68 @@
+
+.inputtext {
+    width: 80px;
+}
+p {
+    margin: 5px 0px 5px 0px;
+}
+th, td {
+	text-align: center;
+	vertical-align: middle !important; 
+}
+.span1 {
+    color: navy;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.span2 {
+    color: crimson;
+    cursor: pointer;
+}
+.span1:hover {
+    color:blue;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.span2:hover {
+    color:red;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.requisito {
+	background-color: #fb635c;
+}
+.prelacion {
+	background-color: #9de1fb;
+}
+.aprobada {
+	background-color: #fff579;
+}
+.normal {
+	background-color: white;
+}
+.contenedorx {
+    display: flex   ;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.materiaOptions{
+    display: FLEX;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.optEdit {
+    color: cornflowerblue;
+    text-decoration: underline;
+    user-select: none;
+    cursor: pointer;
+    font-size: 1em;
+}
+.optEliminar {
+    color: red;
+    text-decoration: underline;
+    user-select: none;
+    cursor: pointer;
+    font-size: 1em;
+}
